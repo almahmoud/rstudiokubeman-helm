@@ -1,0 +1,87 @@
+nameOverride: ""
+fullnameOverride: ""
+
+configs: {}
+  # env-key: env-value
+
+secrets: {}
+  # db-password: changeme
+
+restore:
+  persistence:
+    nfs:
+      galaxy:
+        deployVolume: true
+        # pvcID: pvc-uuid
+        
+      cvmfsCache:
+        deployVolume: true
+        # pvcID: pvc-uuid
+
+persistence:
+  nfs:
+    name: "nfs-disk"
+    # size: 500Gi
+    storageClass: "manual"
+    accessMode: ReadWriteOnce
+    persistentVolume:
+      extraSpec:
+        gcePersistentDisk:
+          # pdName: leo-created-pd
+          fsType: ext4
+  postgres:
+    name: "postgres-disk"
+    # size: 10Gi
+    storageClass: "manual"
+    accessMode: ReadWriteOnce
+    persistentVolume:
+      extraSpec:
+        gcePersistentDisk:
+          # pdName: leo-created-pd
+          fsType: ext4
+
+nfs:
+  persistence:
+    enabled: true
+    storageClass: "standard"
+    size: "500Gi"
+  storageClass:
+    create: true
+    defaultClass: true
+    allowVolumeExpansion: true
+    reclaimPolicy: "Retain"
+    mountOptions:
+      - vers=4.2
+      - noatime
+
+rstudio:
+  postgresql:
+    deploy: true
+    # nodeSelector: "cloud.google.com/gke-nodepool: good-pool"
+  image:
+    repository: bioconductor/bioconductor_docker
+    tag: latest
+  persistence:
+    accessMode: "ReadWriteMany"
+    storageClass: "nfs"
+    size: "300Gi"
+    # existingClaim: "{{ .Release.Name }}-galaxy-pvc"
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+      nginx.ingress.kubernetes.io/auth-tls-secret: "{{.Release.Namespace}}/ca-secret"
+      nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+      nginx.ingress.kubernetes.io/auth-tls-verify-depth: "1"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    tls:
+      - secretName: "tls-secret"
+  terra:
+     launch:
+        workspace: launchWorkspace
+        namespace: launchProject
+
+rbac:
+  enabled: true
+  serviceAccount: default
