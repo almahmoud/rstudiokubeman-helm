@@ -55,12 +55,32 @@ nfs:
       - noatime
 
 rstudio:
+  postgresql:
+    deploy: true
+    # nodeSelector: "cloud.google.com/gke-nodepool: good-pool"
+  image:
+    repository: bioconductor/bioconductor_docker
+    tag: latest
+  persistence:
+    accessMode: "ReadWriteMany"
+    storageClass: "nfs"
+    size: "300Gi"
+    # existingClaim: "{{ .Release.Name }}-galaxy-pvc"
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+      nginx.ingress.kubernetes.io/auth-tls-secret: "{{.Release.Namespace}}/ca-secret"
+      nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+      nginx.ingress.kubernetes.io/auth-tls-verify-depth: "1"
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    tls:
+      - secretName: "tls-secret"
   terra:
      launch:
         workspace: launchWorkspace
         namespace: launchProject
-        drsURL: https://us-central1-broad-dsde-dev.cloudfunctions.net/martha_v3
-        apiURL: https://firecloud-orchestration.dsde-dev.broadinstitute.org/api/
 
 rbac:
   enabled: true
